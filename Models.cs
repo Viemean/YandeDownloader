@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-// API返回的帖子信息
+// API返回的信息
 public class Post
 {
     [JsonPropertyName("id")] public int Id { get; set; }

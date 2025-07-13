@@ -1,4 +1,6 @@
-﻿public class MultiSlotConsoleUi
+﻿//多线程进度条
+
+public class MultiSlotConsoleUi
 {
     private readonly object _lock = new();
     private readonly int _slotCount;
@@ -21,11 +23,10 @@
         lock (_lock)
         {
             Console.CursorVisible = false;
-            // 预留出足够的空间
             Console.WriteLine("下载即将开始...");
             Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
-            _uiStartPosition = Console.CursorTop; // 现在可以赋值了
-            for (var i = 0; i < _slotCount + 2; i++) Console.WriteLine(); // 为总进度条和下载槽位创建空行
+            _uiStartPosition = Console.CursorTop;
+            for (var i = 0; i < _slotCount + 2; i++) Console.WriteLine();
             Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
             Draw();
         }
@@ -86,7 +87,7 @@
     private void DrawProgressBar(string label, double percentage, int totalWidth)
     {
         var labelWidth = label.Length;
-        var barWidth = totalWidth - labelWidth - 5; // 减去标签和 "[ 100%]" 的宽度
+        var barWidth = totalWidth - labelWidth - 5;
         if (barWidth < 10) barWidth = 10;
 
         var progress = (int)(percentage * barWidth);
@@ -100,7 +101,7 @@
     {
         lock (_lock)
         {
-            Console.SetCursorPosition(0, _uiStartPosition + _slotCount + 3); // 移动到UI区域下方
+            Console.SetCursorPosition(0, _uiStartPosition + _slotCount + 3);
             Console.WriteLine("所有下载任务处理完毕。");
             Console.CursorVisible = true;
         }
