@@ -8,8 +8,8 @@ public class YandeDownloader
 {
     private const int MaxConcurrentDownloads = 8;
 
-    private static readonly HttpClient httpClient = new();
-    private static readonly object _logLock = new();
+    private static readonly HttpClient HttpClient = new();
+    private static readonly Lock LogLock = new();
     private readonly string _errorFile = "下载错误.txt";
     private readonly string _logFile = "Ydown.log";
     private readonly string _manifestFile;
@@ -23,7 +23,7 @@ public class YandeDownloader
         _searchTags = tags;
         _outputDir = outputDir;
         _manifestFile = Path.Combine(_outputDir, "manifest.json");
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+        HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
     public async Task StartAsync(bool isResumed)
@@ -110,7 +110,7 @@ public class YandeDownloader
             var url = $"https://yande.re/post.json?limit=100&page={page}&tags={Uri.EscapeDataString(_searchTags)}";
             try
             {
-                var response = await httpClient.GetAsync(url);
+                var response = await HttpClient.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 var jsonStream = await response.Content.ReadAsStreamAsync();
                 var posts = await JsonSerializer.DeserializeAsync<List<Post>>(jsonStream);
@@ -220,7 +220,6 @@ public class YandeDownloader
                             FileSize = actualDownloadedSize,
                             FileName = $"{post.Id}.{post.FileExt}",
                             SearchTags = _searchTags,
-                            DownloadedAt = DateTime.Now.ToLocalTime()
                         };
                         manifest.AddOrUpdate(post.Id, entry, (key, old) => entry);
 
@@ -258,7 +257,7 @@ public class YandeDownloader
 
         try
         {
-            var response = await httpClient.GetAsync(post.FileUrl, HttpCompletionOption.ResponseHeadersRead);
+            var response = await HttpClient.GetAsync(post.FileUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             await using var contentStream = await response.Content.ReadAsStreamAsync();
@@ -288,7 +287,7 @@ public class YandeDownloader
     private void SaveError(int postId)
     {
         var errorUrl = $"https://yande.re/post/show/{postId}{Environment.NewLine}";
-        lock (_logLock)
+        lock (LogLock)
         {
             File.AppendAllText(_errorFile, errorUrl, Encoding.UTF8);
         }
@@ -311,7 +310,7 @@ public class YandeDownloader
     private Task LogAsync(string message)
     {
         var logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
-        lock (_logLock)
+        lock (LogLock)
         {
             File.AppendAllText(_logFile, logMessage + Environment.NewLine, Encoding.UTF8);
         }
