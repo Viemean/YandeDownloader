@@ -5,5 +5,6 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version>1.0.2</Version> <FileVersion>1.0.2.102</FileVersion> <InformationalVersion>1.0.2-release</InformationalVersion> <Authors>Viemean</Authors>
     </PropertyGroup>
 </Project>
