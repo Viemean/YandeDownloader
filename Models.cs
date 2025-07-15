@@ -15,10 +15,11 @@ public class Post
 //TODO添加校验模式
 public class ManifestEntry
 {
-    public string? Tags { get; set; }
-    public string? SearchTags { get; set; }
-    public long FileSize { get; set; }
     public string? FileName { get; set; }
+    public long FileSize { get; set; }
+    public string? SearchTags { get; set; }
+    public string? Tags { get; set; }
+    public string? FileUrl { get; set; }
 }
 
 // 记录在 session.json 中的会话状态

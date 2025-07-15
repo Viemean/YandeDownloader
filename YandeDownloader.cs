@@ -207,7 +207,7 @@ public class YandeDownloader
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     //每隔两秒保存一次
-                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                     await SaveManifestAsync(manifest);
                 }
             }
@@ -255,7 +255,8 @@ public class YandeDownloader
                             FileName = $"{post.Id}.{post.FileExt}",
                             FileSize = downloadedSize,
                             Tags = post.Tags,
-                            SearchTags = _searchTags
+                            SearchTags = _searchTags,
+                            FileUrl = post.FileUrl
                         };
                         manifest.AddOrUpdate(post.Id, entry, (key, old) => entry);
 
@@ -321,17 +322,18 @@ public class YandeDownloader
         catch (Exception e)
         {
             await LogAsync($"下载 ID: {post.Id} 失败: {e.Message}");
-            SaveError(post.Id);
+            SaveError(post.Id, post.FileUrl);
             return 0;
         }
     }
 
-    private void SaveError(int postId)
+    private void SaveError(int postId, string errorFileUrl)
     {
         var errorUrl = $"https://yande.re/post/show/{postId}{Environment.NewLine}";
         lock (LogLock)
         {
             File.AppendAllText(ErrorFile, errorUrl, Encoding.UTF8);
+            File.AppendAllText(ErrorFile, errorFileUrl, Encoding.UTF8);
         }
     }
 
