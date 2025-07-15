@@ -1,6 +1,4 @@
-﻿// Models.cs
-
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 // API返回的信息
 public class Post
