@@ -1,34 +1,49 @@
-﻿//多线程进度条
-
-public class MultiSlotConsoleUi
+﻿/// <summary>
+///     多线程下载进度条
+/// </summary>
+/// <param name="totalFiles">总下载文件数量</param>
+/// <param name="slotCount">进度条数量</param>
+public class MultiSlotConsoleUi(int totalFiles, int slotCount)
 {
-    private readonly object _lock = new();
-    private readonly int _slotCount;
-    private readonly double[] _slotProgress;
-    private readonly string[] _slotStatus;
-    private readonly int _totalFiles;
+    private readonly Lock _lock = new();
+    private readonly double[] _slotProgress = new double[slotCount];
+    private readonly string[] _slotStatus = new string[slotCount];
     private int _completedFiles;
-    private int _uiStartPosition; // 将 readonly 移除
+    private int _uiStartPosition;
 
-    public MultiSlotConsoleUi(int totalFiles, int slotCount)
-    {
-        _totalFiles = totalFiles;
-        _slotCount = slotCount;
-        _slotStatus = new string[slotCount];
-        _slotProgress = new double[slotCount];
-    }
-
+    /// <summary>
+    ///     初始化下载进度条
+    /// </summary>
     public void Initialize()
     {
         lock (_lock)
         {
             Console.CursorVisible = false;
             Console.WriteLine("下载即将开始...");
-            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
+            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 50));
             _uiStartPosition = Console.CursorTop;
-            for (var i = 0; i < _slotCount + 2; i++) Console.WriteLine();
-            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 80));
+            for (var i = 0; i < slotCount + 1; i++) Console.WriteLine();
+            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 50));
             Draw();
+        }
+    }
+
+    private void Draw()
+    {
+        Console.SetCursorPosition(0, _uiStartPosition);
+
+        // 绘制总进度
+        DrawProgressBar($"总进度 ({_completedFiles}/{totalFiles})", (double)_completedFiles / totalFiles,
+            Console.WindowWidth - 2);
+        Console.WriteLine();
+
+        // 绘制每个槽位
+        for (var i = 0; i < slotCount; i++)
+        {
+            var status = _slotStatus[i];
+            var progress = _slotProgress[i];
+            DrawProgressBar($"槽 {i + 1}: {status,-30}", progress, Console.WindowWidth - 2);
+            Console.WriteLine();
         }
     }
 
@@ -65,25 +80,12 @@ public class MultiSlotConsoleUi
         }
     }
 
-    private void Draw()
-    {
-        Console.SetCursorPosition(0, _uiStartPosition);
-
-        // 绘制总进度
-        DrawProgressBar($"总进度 ({_completedFiles}/{_totalFiles})", (double)_completedFiles / _totalFiles,
-            Console.WindowWidth - 2);
-        Console.WriteLine();
-
-        // 绘制每个槽位
-        for (var i = 0; i < _slotCount; i++)
-        {
-            var status = _slotStatus[i] ?? "初始化...";
-            var progress = _slotProgress[i];
-            DrawProgressBar($"槽 {i + 1}: {status.PadRight(30)}", progress, Console.WindowWidth - 2);
-            Console.WriteLine();
-        }
-    }
-
+    /// <summary>
+    ///     绘制进度条
+    /// </summary>
+    /// <param name="label">进度条标签</param>
+    /// <param name="percentage">百分比</param>
+    /// <param name="totalWidth">总宽度</param>
     private void DrawProgressBar(string label, double percentage, int totalWidth)
     {
         var labelWidth = label.Length;
@@ -94,14 +96,14 @@ public class MultiSlotConsoleUi
 
         var bar = $"[{new string('█', progress)}{new string('─', barWidth - progress)}]";
         var line = $"{label} {bar} {percentage:P0} ".PadRight(totalWidth);
-        Console.Write("\r" + line.Substring(0, Math.Min(line.Length, totalWidth)));
+        Console.Write("\r" + line[..Math.Min(line.Length, totalWidth)]);
     }
 
     public void Finish()
     {
         lock (_lock)
         {
-            Console.SetCursorPosition(0, _uiStartPosition + _slotCount + 3);
+            Console.SetCursorPosition(0, _uiStartPosition + slotCount + 3);
             Console.WriteLine("所有下载任务处理完毕。");
             Console.CursorVisible = true;
         }

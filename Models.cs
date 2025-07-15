@@ -26,6 +26,6 @@ public class ManifestEntry
 // 记录在 session.json 中的会话状态
 public class SessionState
 {
-    public string Tags { get; set; } = "";
+    public string SearchTags { get; set; } = "";
     public string OutputDir { get; set; } = "";
 }
