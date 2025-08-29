@@ -2,7 +2,8 @@
 using System.Text;
 using System.Text.Json;
 
-public class YandeDownloader
+namespace YandeDownloader;
+public class Downloader
 {
     //最大线程
     private const int MaxConcurrentDownloads = 5;
@@ -15,7 +16,7 @@ public class YandeDownloader
     private readonly string _outputDir;
     private readonly string _searchTags;
 
-    public YandeDownloader(string searchTags, string outputDir)
+    public Downloader(string searchTags, string outputDir)
     {
         _searchTags = searchTags;
         _outputDir = outputDir;
@@ -155,7 +156,7 @@ public class YandeDownloader
     }
 
     /// <summary>
-    ///     检查远程json数据是否已被下载记录到manifset中，检查id和大小是否一直
+    ///     检查远程json数据是否已被下载记录到manifest中，检查id和大小是否一直
     /// </summary>
     /// <param name="allPosts">网络解析的json数据</param>
     /// <param name="manifest">用户已解析的本地json数据</param>
@@ -258,7 +259,7 @@ public class YandeDownloader
                             SearchTags = _searchTags,
                             FileUrl = post.FileUrl
                         };
-                        manifest.AddOrUpdate(post.Id, entry, (key, old) => entry);
+                        manifest.AddOrUpdate(post.Id, entry, (_, _) => entry);
 
                         ui.SetSlotStatus(slotNumber, $"完成 ID: {post.Id} ({FormatBytes(downloadedSize)})", true);
                     }

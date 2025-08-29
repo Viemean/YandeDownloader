@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
+namespace YandeDownloader;
+
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(List<Post>))]
 [JsonSerializable(typeof(ConcurrentDictionary<int, ManifestEntry>))]

@@ -1,7 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-internal class Program
+namespace YandeDownloader;
+internal static class Program
 {
     private const string SessionFile = "session.json";
 
@@ -88,7 +89,7 @@ internal class Program
         Console.WriteLine("---------------------------------------------------------");
 
         // 创建下载器实例并启动
-        var downloader = new YandeDownloader(searchTags, outputDir);
+        var downloader = new Downloader(searchTags, outputDir);
         await downloader.StartAsync(isResumed);
 
         Console.WriteLine("\n======================= 操作完成 ========================");

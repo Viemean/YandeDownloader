@@ -1,4 +1,6 @@
-﻿/// <summary>
+﻿namespace YandeDownloader;
+
+/// <summary>
 ///     多线程下载进度条
 /// </summary>
 /// <param name="totalFiles">总下载文件数量</param>

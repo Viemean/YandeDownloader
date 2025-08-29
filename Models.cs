@@ -1,5 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 
+namespace YandeDownloader;
+
 // API返回的信息
 public class Post
 {
