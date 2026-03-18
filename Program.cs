@@ -2,6 +2,7 @@
 using System.Text.Json;
 
 namespace YandeDownloader;
+
 internal static class Program
 {
     private const string SessionFile = "session.json";
