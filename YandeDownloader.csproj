@@ -5,10 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <PublishAot>true</PublishAot>
         <Version>1.0.3</Version>
         <InformationalVersion>1.0.3-release</InformationalVersion>
         <Authors>Viemean</Authors>
-        <OptimizationPreference>Size</OptimizationPreference>
     </PropertyGroup>
 </Project>
