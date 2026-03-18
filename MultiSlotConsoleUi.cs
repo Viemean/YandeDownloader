@@ -88,7 +88,7 @@ public class MultiSlotConsoleUi(int totalFiles, int slotCount)
     /// <param name="label">进度条标签</param>
     /// <param name="percentage">百分比</param>
     /// <param name="totalWidth">总宽度</param>
-    private void DrawProgressBar(string label, double percentage, int totalWidth)
+    private static void DrawProgressBar(string label, double percentage, int totalWidth)
     {
         var labelWidth = label.Length;
         var barWidth = totalWidth - labelWidth - 5;

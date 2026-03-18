@@ -28,7 +28,7 @@ internal static class Program
                 Console.WriteLine($"  - 目录: {lastSession.OutputDir}");
                 Console.Write("是否继续? (Y/n): ");
                 var resume = Console.ReadLine()?.ToLower() ?? "y";
-                if (resume == "y" || resume == "")
+                if (resume is "y" or "")
                 {
                     searchTags = lastSession.SearchTags;
                     outputDir = lastSession.OutputDir;

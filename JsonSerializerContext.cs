@@ -10,6 +10,4 @@ namespace YandeDownloader;
 [JsonSerializable(typeof(Post))]
 [JsonSerializable(typeof(ManifestEntry))]
 [JsonSerializable(typeof(Dictionary<int, ManifestEntry>))]
-public partial class SourceGenerationContext : JsonSerializerContext
-{
-}
+public partial class SourceGenerationContext : JsonSerializerContext;

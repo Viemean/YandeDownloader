@@ -328,7 +328,7 @@ public class Downloader
         }
     }
 
-    private void SaveError(int postId, string errorFileUrl)
+    private static void SaveError(int postId, string errorFileUrl)
     {
         var errorUrl = $"https://yande.re/post/show/{postId}{Environment.NewLine}";
         lock (LogLock)
@@ -338,7 +338,7 @@ public class Downloader
         }
     }
 
-    private string FormatBytes(long bytes)
+    private static string FormatBytes(long bytes)
     {
         switch (bytes)
         {

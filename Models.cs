@@ -14,7 +14,6 @@ public class Post
 }
 
 // 记录在 manifest.json 中的条目
-//TODO添加校验模式
 public class ManifestEntry
 {
     public string? FileName { get; set; }
