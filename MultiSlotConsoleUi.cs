@@ -1,113 +1,149 @@
 ﻿namespace YandeDownloader;
 
-/// <summary>
-///     多线程下载进度条
-/// </summary>
-/// <param name="totalFiles">总下载文件数量</param>
-/// <param name="slotCount">进度条数量</param>
-public class MultiSlotConsoleUi(int totalFiles, int slotCount)
+public class MultiSlotConsoleUi
 {
-    private readonly Lock _lock = new();
-    private readonly double[] _slotProgress = new double[slotCount];
-    private readonly string[] _slotStatus = new string[slotCount];
-    private int _completedFiles;
-    private int _uiStartPosition;
+    private readonly int _totalItems;
+    private readonly int _numSlots;
 
-    /// <summary>
-    ///     初始化下载进度条
-    /// </summary>
+    private int _totalProgress;
+
+    private readonly Lock _consoleLock = new();
+
+    // 记录 UI 在控制台中的起始行号
+    private int _uiTopRow;
+
+    // 缓存每个 Slot 的当前状态文本和百分比，用于重绘
+    private readonly string[] _slotStatuses;
+    private readonly double[] _slotProgress;
+
+    public MultiSlotConsoleUi(int totalItems, int numSlots)
+    {
+        _totalItems = totalItems;
+        _numSlots = numSlots;
+        _slotStatuses = new string[numSlots];
+        _slotProgress = new double[numSlots];
+
+        for (var i = 0; i < numSlots; i++) _slotStatuses[i] = "空闲";
+    }
+
     public void Initialize()
     {
-        lock (_lock)
+        lock (_consoleLock)
         {
-            Console.CursorVisible = false;
-            Console.WriteLine("下载即将开始...");
-            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 50));
-            _uiStartPosition = Console.CursorTop;
-            for (var i = 0; i < slotCount + 1; i++) Console.WriteLine();
-            Console.WriteLine(new string('=', Console.WindowWidth > 0 ? Console.WindowWidth - 1 : 50));
-            Draw();
+            Console.WriteLine(new string('=', Console.WindowWidth - 1));
+
+            _uiTopRow = Console.CursorTop;
+
+            Console.WriteLine("总进度: Waiting...");
+
+            for (var i = 0; i < _numSlots; i++) Console.WriteLine($"[通道 {i + 1}] 空闲");
+
+            Console.WriteLine(new string('-', Console.WindowWidth - 1));
+
+            UpdateTotalDisplay();
+            for (var i = 0; i < _numSlots; i++) RedrawSlot(i);
         }
     }
 
-    private void Draw()
+    private void SafeDrawLine(int relativeLineIndex, string text, ConsoleColor? color = null)
     {
-        Console.SetCursorPosition(0, _uiStartPosition);
-
-        // 绘制总进度
-        DrawProgressBar($"总进度 ({_completedFiles}/{totalFiles})", (double)_completedFiles / totalFiles,
-            Console.WindowWidth - 2);
-        Console.WriteLine();
-
-        // 绘制每个槽位
-        for (var i = 0; i < slotCount; i++)
+        lock (_consoleLock)
         {
-            var status = _slotStatus[i];
-            var progress = _slotProgress[i];
-            DrawProgressBar($"槽 {i + 1}: {status,-30}", progress, Console.WindowWidth - 2);
-            Console.WriteLine();
-        }
-    }
-
-    public void SetSlotStatus(int slot, string status, bool isSuccess = false, bool isError = false)
-    {
-        lock (_lock)
-        {
+            var originalLeft = Console.CursorLeft;
+            var originalTop = Console.CursorTop;
             var originalColor = Console.ForegroundColor;
-            if (isSuccess) Console.ForegroundColor = ConsoleColor.Green;
-            if (isError) Console.ForegroundColor = ConsoleColor.Red;
 
-            _slotStatus[slot] = status;
-            Draw();
+            try
+            {
+                var targetTop = _uiTopRow + relativeLineIndex;
 
-            Console.ForegroundColor = originalColor;
+                if (targetTop >= Console.BufferHeight) return;
+                Console.SetCursorPosition(0, targetTop);
+
+                Console.Write(new string(' ', Console.WindowWidth - 1));
+                Console.SetCursorPosition(0, targetTop);
+
+                if (color.HasValue) Console.ForegroundColor = color.Value;
+                if (text.Length >= Console.WindowWidth) text = text[..(Console.WindowWidth - 2)];
+                Console.Write(text);
+            }
+            catch
+            {
+                /* 忽略绘图错误 */
+            }
+            finally
+            {
+                Console.ForegroundColor = originalColor;
+                Console.SetCursorPosition(originalLeft, originalTop);
+            }
         }
     }
 
-    public void UpdateSlotProgress(int slot, double progress)
+    private static string GetProgressBar(double percent)
     {
-        lock (_lock)
-        {
-            _slotProgress[slot] = progress;
-            Draw();
-        }
+        const int blockCount = 20;
+        var filled = (int)(percent * blockCount);
+        if (filled < 0) filled = 0;
+        if (filled > blockCount) filled = blockCount;
+        return $"[{new string('#', filled)}{new string('-', blockCount - filled)}] {percent * 100:0}%";
     }
 
     public void IncrementTotalProgress()
     {
-        lock (_lock)
-        {
-            _completedFiles++;
-            Draw();
-        }
+        Interlocked.Increment(ref _totalProgress);
+        UpdateTotalDisplay();
     }
 
-    /// <summary>
-    ///     绘制进度条
-    /// </summary>
-    /// <param name="label">进度条标签</param>
-    /// <param name="percentage">百分比</param>
-    /// <param name="totalWidth">总宽度</param>
-    private static void DrawProgressBar(string label, double percentage, int totalWidth)
+    private void UpdateTotalDisplay()
     {
-        var labelWidth = label.Length;
-        var barWidth = totalWidth - labelWidth - 5;
-        if (barWidth < 10) barWidth = 10;
+        var progress = _totalProgress;
+        var percent = _totalItems == 0 ? 0 : (double)progress / _totalItems;
+        var bar = GetProgressBar(percent);
+        var text = $"总进度: {progress}/{_totalItems} {bar}";
 
-        var progress = (int)(percentage * barWidth);
+        SafeDrawLine(0, text, ConsoleColor.Cyan);
+    }
 
-        var bar = $"[{new string('█', progress)}{new string('─', barWidth - progress)}]";
-        var line = $"{label} {bar} {percentage:P0} ".PadRight(totalWidth);
-        Console.Write("\r" + line[..Math.Min(line.Length, totalWidth)]);
+    public void UpdateSlotProgress(int slotNumber, double percentage)
+    {
+        _slotProgress[slotNumber] = percentage;
+        RedrawSlot(slotNumber);
+    }
+
+    public void SetSlotStatus(int slotNumber, string status, bool isFinished = false, bool isError = false)
+    {
+        _slotStatuses[slotNumber] = status;
+
+        if (isFinished || isError) _slotProgress[slotNumber] = 0;
+
+        RedrawSlot(slotNumber, isFinished, isError);
+    }
+
+    private void RedrawSlot(int slotNumber, bool isFinished = false, bool isError = false)
+    {
+        var status = _slotStatuses[slotNumber];
+
+        var bar = status == "空闲" || isFinished || isError ? "" : GetProgressBar(_slotProgress[slotNumber]);
+
+        var text = $"[通道 {slotNumber + 1}] {status} {bar}";
+
+        ConsoleColor? color = null;
+        if (isFinished) color = ConsoleColor.Green;
+        else if (isError) color = ConsoleColor.Red;
+        else if (status == "空闲") color = ConsoleColor.Gray;
+
+        SafeDrawLine(slotNumber + 1, text, color);
     }
 
     public void Finish()
     {
-        lock (_lock)
+        lock (_consoleLock)
         {
-            Console.SetCursorPosition(0, _uiStartPosition + slotCount + 3);
-            Console.WriteLine("所有下载任务处理完毕。");
-            Console.CursorVisible = true;
+            var bottomLine = _uiTopRow + _numSlots + 2;
+            if (bottomLine < Console.BufferHeight)
+                Console.SetCursorPosition(0, bottomLine);
+            else
+                Console.SetCursorPosition(0, Console.BufferHeight - 1);
         }
     }
 }

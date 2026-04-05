@@ -8,5 +8,14 @@
         <Version>1.0.4</Version>
         <InformationalVersion>1.0.4-release</InformationalVersion>
         <Authors>Viemean</Authors>
+
+        <PublishAot>true</PublishAot>
+        <OptimizationPreference>Speed</OptimizationPreference>
+
+        <IlcInstructionSet>avx2</IlcInstructionSet>
+
+        <StripSymbols>true</StripSymbols>
+        <DebuggerSupport>false</DebuggerSupport>
+        <EventSourceSupport>false</EventSourceSupport>
     </PropertyGroup>
 </Project>
